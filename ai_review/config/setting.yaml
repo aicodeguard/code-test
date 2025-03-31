@@ -1,0 +1,9 @@
+rules:
+  security: true
+  style: true
+  performance: true
+
+ai:
+  enable: true
+  api_key: sk-your-openai-key
+  max_suggestions: 3
