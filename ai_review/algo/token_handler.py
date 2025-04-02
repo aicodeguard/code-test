@@ -37,56 +37,54 @@ class TokenHandler:
       method.
     """
 
-    def __init__(self, pr=None, vars: dict = None, system="", user=""):
-         if vars is None:
-             vars = {}
-         ...
+    def __init__(self, pr=None, vars: dict = None, system: str = "", user: str = ""):
         """
-        Initializes the TokenHandler object.
-
+        初始化 TokenHandler 对象
+        
         Args:
-        - pr: The pull request object.
-        - vars: A dictionary of variables.
-        - system: The system string.
-        - user: The user string.
+            pr: Pull Request 对象
+            vars: 变量字典，默认为空字典
+            system: 系统提示字符串
+            user: 用户提示字符串
         """
+        self.vars = vars or {}  # 使用更简洁的空字典初始化
         self.encoder = TokenEncoder.get_token_encoder()
-        if pr is not None:
-            self.prompt_tokens = self._get_system_user_tokens(pr, self.encoder, vars, system, user)
+        self.prompt_tokens = (self._get_system_user_tokens(pr, self.encoder, self.vars, system, user) 
+                            if pr is not None else 0)
 
-    def _get_system_user_tokens(self, pr, encoder, vars: dict, system, user):
+    def _get_system_user_tokens(self, pr, encoder, vars: dict, system: str, user: str) -> int:
         """
-        Calculates the number of tokens in the system and user strings.
-
+        计算系统和用户字符串中的令牌数
+        
         Args:
-        - pr: The pull request object.
-        - encoder: An object of the encoding_for_model class from the tiktoken module.
-        - vars: A dictionary of variables.
-        - system: The system string.
-        - user: The user string.
-
+            pr: Pull Request 对象
+            encoder: tiktoken 编码器实例
+            vars: 变量字典
+            system: 系统提示字符串
+            user: 用户提示字符串
+            
         Returns:
-        The sum of the number of tokens in the system and user strings.
+            int: 系统和用户字符串中的总令牌数
         """
         try:
             environment = Environment(undefined=StrictUndefined)
             system_prompt = environment.from_string(system).render(vars)
             user_prompt = environment.from_string(user).render(vars)
-            system_prompt_tokens = len(encoder.encode(system_prompt))
-            user_prompt_tokens = len(encoder.encode(user_prompt))
-            return system_prompt_tokens + user_prompt_tokens
+            
+            return len(encoder.encode(system_prompt)) + len(encoder.encode(user_prompt))
+            
         except Exception as e:
-            get_logger().error(f"Error in _get_system_user_tokens: {e}")
+            get_logger().error(f"Error in _get_system_user_tokens: {str(e)}")
             return 0
 
     def count_tokens(self, patch: str) -> int:
         """
-        Counts the number of tokens in a given patch string.
-
+        计算给定补丁字符串中的令牌数
+        
         Args:
-        - patch: The patch string.
-
+            patch: 补丁字符串
+            
         Returns:
-        The number of tokens in the patch string.
+            int: 补丁字符串中的令牌数
         """
         return len(self.encoder.encode(patch, disallowed_special=()))
